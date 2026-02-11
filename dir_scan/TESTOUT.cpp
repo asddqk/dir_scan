@@ -1,72 +1,72 @@
 //------------------------------------------------------------------------------
-// tesout.cpp - �������� ����� ���������� � ��������
+// tesout.cpp — вывод результатов лексического анализа (вариант 1)
 //------------------------------------------------------------------------------
-/*Хранит: ВЫВОД РЕЗУЛЬТАТОВ
-
-Что внутри:
-- fprintlex() — печатает найденную лексему
-  * switch(lc) — для каждого типа лексемы своя строка
-  * Формирует: [строка, столбец] lc: тип_лексемы lv: значение
-
-Что делать: ДОБАВЛЯТЬ новые case для новых лексем */
 
 #include <stdio.h>
 #include "scaner_ext.h"
 
-//------------------------------------------------------------------------------
-
 void fprintlex(FILE* f) 
 {
-  char* lcs;
-  char* lvs;
-  switch(lc) 
-  {
-    case lexPlus:       lcs="lexPlus";      lvs="+";  break;
-    case lexAssign:     lcs="lexAssign";    lvs=":="; break;
-    case lexComma:      lcs="lexComma";     lvs=",";  break;
-    case lexComment:    lcs="lexComment";   lvs=lv;   break;
-    case lexSlash:      lcs="lexSlash";     lvs="/";  break;
-    case lexColon:      lcs="lexColon";     lvs=":";  break;
-    case lexEQ:         lcs="lexEQ";        lvs="=";  break;
-    case lexEof:        lcs="lexEof";       lvs="-1"; break;
-    case lexError:      lcs="lexError";     lvs=lv;   break;
-    case lexFloat:      lcs="lexFloat";     lvs=lv;   break;
-    case lexGE:         lcs="lexGE";        lvs=">="; break;
-    case lexGT:         lcs="lexGT";        lvs=">";  break;
-    case lexId:         lcs="lexId";        lvs=lv;   break;
-    case lexIgnore:     lcs="lexIgnore";    lvs=lv;   break;
-    case lexInt:        lcs="lexInt";       lvs=lv;   break;
-    case lexLE:         lcs="lexLE";        lvs="<="; break;
-    case lexLftRndBr:   lcs="lexLftRndBr";  lvs="(";  break;
-    case lexLftSqBr:    lcs="lexLftSqBr";   lvs="[";  break;
-    case lexLT:         lcs="lexLT";        lvs="<";  break;
-    case lexPercent:    lcs="lexPercent";   lvs="%";  break;
-    case lexStar:       lcs="lexStar";      lvs="*";  break;
-    case lexString:     lcs="lexString";    lvs=lv;   break;
-    case lexNE:         lcs="lexNE";        lvs="!="; break;
-    case lexSemicolon:  lcs="lexSemicolon"; lvs=";";  break;
-    case lexRghRndBr:   lcs="lexRghRndBr";  lvs=")";  break;
-    case lexRghSqBr:    lcs="lexRghSqBr";   lvs="]";  break;
-    case lexSkip:       lcs="lexSkip";      lvs=" ";  break;
-    case lexArrow:      lcs="lexArrow";     lvs="->"; break;
-    case lexMinus:      lcs="lexMinus";     lvs="-";  break;
+    const char* lcs;
+    const char* lvs;
 
-    case kwAbort: lcs="KWABORT";  lvs=lv;   break;
-    case kwBegin: lcs="KWBEGIN";  lvs=lv;   break;
-    case kwCase:  lcs="KWCASE";   lvs=lv;   break;
-    case kwEnd:   lcs="KWEND";    lvs=lv;   break;
-    case kwFloat: lcs="KWFLOAT";  lvs=lv;   break;
-    case kwGoto:  lcs="KWGOTO";   lvs=lv;   break;
-    case kwInt:   lcs="KWINT";    lvs=lv;   break;
-    case kwLoop:  lcs="KWLOOP";   lvs=lv;   break;
-    case kwOr:    lcs="KWOR";     lvs=lv;   break;
-    case kwRead:  lcs="KWREAD";   lvs=lv;   break;
-    case kwSkip:  lcs="KWSKIP";   lvs=lv;   break;
-    case kwSpace: lcs="KWSPACE";  lvs=lv;   break;
-    case kwTab:   lcs="KWTAB";    lvs=lv;   break;
-    case kwVar:   lcs="KWVAR";    lvs=lv;   break;
-    case kwWrite: lcs="KWWRITE";  lvs=lv;   break;
-    default:      lcs="nonprinted lex class"; lvs=lv;
-  }
-  fprintf(f, "[%d, %d] lc: %s\t\tlv: %s\n", line, column, lcs, lvs);  
+    switch(lc) 
+    {
+        case lexId:        lcs="lexId";       lvs=lv; break;
+        case lexError:     lcs="lexError";    lvs=lv; break;
+        case lexInt:       lcs="lexInt";      lvs=lv; break;
+        case lexFloat:     lcs="lexFloat";    lvs=lv; break;
+        case lexString:    lcs="lexString";   lvs=lv; break;
+        case lexEof:       lcs="lexEof";      lvs="EOF"; break;
+        case lexSkip:      lcs="lexSkip";     lvs=" "; break;
+        case lexIgnore:    lcs="lexIgnore";   lvs=lv; break;
+        case lexColon:     lcs="lexColon";    lvs=":"; break;
+
+        case lexPLUS:      lcs="lexPLUS";     lvs="+"; break;
+        case lexMIN:       lcs="lexMIN";      lvs="-"; break;
+        case lexMULT:      lcs="lexMULT";     lvs="*"; break;
+        case lexDIV:       lcs="lexDIV";      lvs="/"; break;
+        case lexMOD:       lcs="lexMOD";      lvs="mod"; break;
+
+        case lexEQ:        lcs="lexEQ";       lvs="="; break;
+        case lexNE:        lcs="lexNE";       lvs="<>"; break;
+        case lexLT:        lcs="lexLT";       lvs="<"; break;
+        case lexGT:        lcs="lexGT";       lvs=">"; break;
+        case lexLE:        lcs="lexLE";       lvs="<="; break;
+        case lexGE:        lcs="lexGE";       lvs=">="; break;
+
+        case lexASS:       lcs="lexASS";      lvs=":="; break;
+
+        case lexCOMMENT:  lcs="lexCOMMENT";  lvs=lv; break;
+
+        case lexBST:      lcs="lexBST";      lvs="begin"; break;
+        case lexEST:      lcs="lexEST";      lvs="end"; break;
+
+        case lexEOP:      lcs="lexEOP";      lvs=";"; break;
+
+        case kwVECTOR:    lcs="kwVECTOR";    lvs=lv; break;
+        case kwOF:        lcs="kwOF";        lvs=lv; break;
+        case kwINTEGER:  lcs="kwINTEGER";  lvs=lv; break;
+        case kwREAL:     lcs="kwREAL";     lvs=lv; break;
+
+        case kwGOTO:     lcs="kwGOTO";     lvs=lv; break;
+        case kwREAD:     lcs="kwREAD";     lvs=lv; break;
+        case kwWRITE:    lcs="kwWRITE";    lvs=lv; break;
+
+        case kwSKIP:      lcs="kwSKIP";      lvs=lv; break;
+        case kwSPACE:    lcs="kwSPACE";    lvs=lv; break;
+        case kwTAB:      lcs="kwTAB";      lvs=lv; break;
+
+        case kwIF:        lcs="kwIF";        lvs=lv; break;
+        case kwTHEN:      lcs="kwTHEN";      lvs=lv; break;
+        case kwELSE:      lcs="kwELSE";      lvs=lv; break;
+        case kwWHILE:     lcs="kwWHILE";     lvs=lv; break;
+        case kwDO:        lcs="kwDO";        lvs=lv; break;
+
+        default:
+            lcs="UNKNOWN";
+            lvs=lv;
+    }
+
+    fprintf(f, "[%d, %d] lc: %-10s  lv: %s\n", line, column, lcs, lvs);
 }

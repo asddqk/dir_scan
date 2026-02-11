@@ -23,10 +23,18 @@
 #include "scaner_data.h"
 #include "scaner_local.h"
 
-//------------------------------------------------------------------------------
-
+// Функция обработки ошибок (объявлена внешне, реализация в error.cpp)
 void er(int i);
 
+//вспомгательные функции / база
+//все функции возвращают true/false - является ли символ тем или иным типом
+
+//идентификаторы ключслова
+/**
+ * Проверяет, является ли символ буквой (латиница)
+ * Возвращает true для: A-Z, a-z
+ * Используется для: распознавания идентификаторов и ключевых слов
+ */
 bool inline isLetter(int ch) {
   if((ch >= 'A' && ch <= 'Z') || (ch >= 'a' && ch <= 'z'))
     return true;
@@ -34,8 +42,12 @@ bool inline isLetter(int ch) {
     return false;
 }
 
-//------------------------------------------------------------------------------
-
+//2ичная
+/**
+ * Проверяет, является ли символ двоичной цифрой
+ * Возвращает true для: 0, 1
+ * Используется для: распознавания двоичных чисел (0b1010)
+ */
 bool inline isBin(int ch) {
   if((ch == '0' || ch == '1'))
     return true;
@@ -43,8 +55,12 @@ bool inline isBin(int ch) {
     return false;
 }
 
-//------------------------------------------------------------------------------
-
+//8ичная
+/**
+ * Проверяет, является ли символ восьмеричной цифрой
+ * Возвращает true для: 0-7
+ * Используется для: распознавания восьмеричных чисел (0755)
+ */
 bool inline isOctal(int ch) {
   if((ch >= '0' && ch <= '7'))
     return true;
@@ -52,8 +68,12 @@ bool inline isOctal(int ch) {
     return false;
 }
 
-//------------------------------------------------------------------------------
-
+//10ичная
+/**
+ * Проверяет, является ли символ десятичной цифрой
+ * Возвращает true для: 0-9
+ * Используется для: распознавания десятичных чисел (123)
+ */
 bool inline isDigit(int ch) {
   if((ch >= '0' && ch <= '9'))
     return true;
@@ -61,8 +81,12 @@ bool inline isDigit(int ch) {
     return false;
 }
 
-//------------------------------------------------------------------------------
-
+//16ричная
+/**
+ * Проверяет, является ли символ шестнадцатеричной цифрой
+ * Возвращает true для: 0-9, A-F, a-f
+ * Используется для: распознавания шестнадцатеричных чисел (0xFF, 0x1A)
+ */
 bool inline isHex(int ch) {
   if((ch >= '0' && ch <= '9') ||
      (ch >= 'A' && ch <= 'F') || 
@@ -72,8 +96,12 @@ bool inline isHex(int ch) {
     return false;
 }
 
-//------------------------------------------------------------------------------
-
+//пропуск разделителей (пробле таб /n)
+/**
+ * Проверяет, является ли символ пропускаемым (разделителем)
+ * Возвращает true для: пробел, табуляция, новая строка, перевод страницы
+ * Используется для: игнорирования пробелов между лексемами
+ */
 bool inline isSkip(int ch) {
   if(ch == ' ' || ch == '\t' || ch == '\n' || ch == '\f')
     return true;
@@ -81,9 +109,12 @@ bool inline isSkip(int ch) {
     return false;
 }
 
-//------------------------------------------------------------------------------
-
-// ���������� �������������� ������� � ������ ������������
+//игнор мусора
+/**
+ * Проверяет, является ли символ игнорируемым управляющим символом
+ * Возвращает true для: управляющие символы ASCII (1-31), кроме \t, \n, \f
+ * Используется для: игнорирования "мусорных" символов
+ */
 bool inline isIgnore(int ch) {
   if(ch >0 && ch < ' ' && ch != '\t' && ch != '\n' && ch != '\f')
     return true;
@@ -91,18 +122,29 @@ bool inline isIgnore(int ch) {
     return false;
 }
 
-//------------------------------------------------------------------------------
-
-// ������ ��������� ������ �� �������� ������
+//читате след символ 
+/**
+ * Читает следующий символ из входного файла
+ * Глобальные переменные:
+ *   si     - текущий считанный символ
+ *   infil  - указатель на входной файл
+ *   line   - текущая строка (для сообщений об ошибках)
+ *   column - текущая колонка (для сообщений об ошибках)
+ * 
+ * Действие:
+ *   1. Читает один символ из файла через getc()
+ *   2. Если считан '\n' - увеличивает номер строки, сбрасывает колонку
+ *   3. Иначе - увеличивает номер колонки
+ * 
+ * Вызывается: перед распознаванием каждой лексемы
+ */
 static void nxsi(void)
 {
     if((si = getc(infil)) == '\n') {++line; column = 0;}
     else ++column;
 }
 
-//------------------------------------------------------------------------------
-
-// ���������� �������������� � ��������� �����
+//РАСПОЗНОВАНИЕ ЛЕКСЕМ 
 static void find_idkw(void)
 {
   for(int i = 0; i < rw_size; ++i)
@@ -113,9 +155,6 @@ static void find_idkw(void)
   lc = lexId;
 }
 
-//------------------------------------------------------------------------------
-
-// �������� �� ������������� ��� �������� �����
 static void id_etc(void)
 {
     while(isLetter(si) || isDigit(si) || si=='_') {
@@ -127,30 +166,93 @@ static void id_etc(void)
 }
 
 //------------------------------------------------------------------------------
-
-// ���� ������� ��� �����������
-static void divcom(void)
+//НОВАЯ ФУНКЦИЯ: двоичные числа (0b1010, 0B1010)
+static void binary_number(void)
 {
-    if(si != '*') {lc = lexSlash; return;}
-    nxsi();
-loop: 
-    if(si == EOF) { 
-      lc = lexError; lv[++i_lv]='\0'; er(2); return; 
-    } 
-    while(si != '*') {
+    nxsi(); // пропускаем 'b' или 'B'
+    if(!isBin(si)) {
+        lc = lexError; 
+        er(4); 
+        return;
+    }
+    while(isBin(si)) {
         lv[++i_lv] = si;
-        if(si == EOF) {lc = lexError; lv[++i_lv]='\0'; er(2); return;} 
         nxsi();
     }
-    nxsi(); if(si != '/') {lv[++i_lv] = si; goto loop;}
     lv[++i_lv] = '\0';
-    lc = lexComment;
-    nxsi();
+    lc = lexInt;
 }
 
 //------------------------------------------------------------------------------
+//НОВАЯ ФУНКЦИЯ: шестнадцатеричные числа (0xFF, 0x1A)
+static void hex_number(void)
+{
+    nxsi(); // пропускаем 'x' или 'X'
+    if(!isHex(si)) {
+        lc = lexError; 
+        er(4); 
+        return;
+    }
+    while(isHex(si)) {
+        lv[++i_lv] = si;
+        nxsi();
+    }
+    lv[++i_lv] = '\0';
+    lc = lexInt;
+}
 
-// �������� ������� �����
+//------------------------------------------------------------------------------
+//НОВАЯ ФУНКЦИЯ: числа с префиксом 0
+static void zero_prefix(void)
+{
+    lv[++i_lv] = si;  // сохраняем '0'
+    nxsi();
+    
+    if(si == 'b' || si == 'B') {
+        lv[++i_lv] = si;
+        binary_number();
+    }
+    else if(si == 'x' || si == 'X') {
+        lv[++i_lv] = si;
+        hex_number();
+    }
+    else if(isOctal(si)) {
+        // восьмеричное число
+        while(isOctal(si)) {
+            lv[++i_lv] = si;
+            nxsi();
+        }
+        lv[++i_lv] = '\0';
+        lc = lexInt;
+    }
+    else {
+        // просто ноль
+        lv[++i_lv] = '\0';
+        lc = lexInt;
+    }
+}
+
+//------------------------------------------------------------------------------
+//НОВАЯ ФУНКЦИЯ: комментарии { } для Паскаля
+static void comment_pascal(void)
+{
+    // Пропускаем символы до закрывающей '}'
+    while(si != '}' && si != EOF) {
+        lv[++i_lv] = si;
+        nxsi();
+    }
+    
+    if(si == '}') {
+        nxsi();  // пропускаем '}'
+        lv[++i_lv] = '\0';
+        lc = lexCOMMENT;
+    } else {
+        lc = lexError;
+        lv[++i_lv] = '\0';
+        er(2);  // комментарий не закрыт
+    }
+}
+
 static void expon(void) {
   lv[++i_lv]=si; nxsi();
   //_0:
@@ -166,9 +268,7 @@ static void expon(void) {
     lc=lexFloat; lv[++i_lv]='\0'; return;
 }
 
-//------------------------------------------------------------------------------
 
-// ����� � ��������� ������
 static void fltnumber(void) {
   lv[++i_lv]=si; nxsi();
   _0:
@@ -181,9 +281,7 @@ static void fltnumber(void) {
     lc=lexFloat; lv[++i_lv]='\0'; return; 
 }
 
-//------------------------------------------------------------------------------
 
-// ����� ��� ��������������
 static void number(void) {
   do {
     lv[++i_lv] = si;
@@ -195,56 +293,7 @@ static void number(void) {
   lc = lexInt; lv[++i_lv] = '\0'; 
 }
 
-//------------------------------------------------------------------------------
 
-// ����� � ���������
-static void prenumber(void) {
-    //_0:
-        if(isDigit(si)) {
-          lv[++i_lv] = si; nxsi(); goto _1;
-        }
-        lc = lexError; lv[++i_lv] = '\0'; er(3); return;
-    _1:
-        if(isDigit(si)) {lv[++i_lv] = si; nxsi(); goto _1;}
-        if(si=='}') {
-          lv[++i_lv] = '\0'; nxsi();
-          if(!strcmp(lv, "2")) {lv[i_lv]='#'; goto _2;}
-          if(!strcmp(lv, "8")) {lv[i_lv]='#'; goto _3;}
-          if(!strcmp(lv, "10")) {lv[i_lv]='#'; goto _4;}
-          if(!strcmp(lv, "16")) {lv[i_lv]='#'; goto _5;}
-          lc = lexError; lv[++i_lv] = '\0'; er(4); return;
-        }
-        lc = lexError; lv[++i_lv] = '\0'; er(3); return;
-    _2:
-        if(isBin(si)) {lv[++i_lv]=si; nxsi(); goto _2;}
-        if(isLetter(si) || isDigit(si)) 
-        {
-          lc = lexError; lv[++i_lv]='\0'; er(3); return;
-        }
-        lc = lexInt; lv[++i_lv] ='\0'; return;
-    _3:
-        if(isOctal(si)) {lv[++i_lv]=si; nxsi(); goto _3;}
-        if(isLetter(si) || isDigit(si))
-        {
-          lc = lexError; lv[++i_lv]='\0'; er(3); return;
-        }
-        lc = lexInt; lv[++i_lv] ='\0'; return;
-    _4:
-        if(isDigit(si)) {lv[++i_lv]=si; nxsi(); goto _4;}
-        if(isLetter(si)) {lc = lexError; lv[++i_lv]='\0'; er(3); return;}
-        lc = lexInt; lv[++i_lv] ='\0'; return;
-    _5:
-        if(isHex(si)) 
-        {
-          lv[++i_lv]=si; nxsi(); goto _5;
-        }
-        if(isLetter(si)) {lc = lexError; lv[++i_lv]='\0'; er(3); return;}
-        lc = lexInt; lv[++i_lv]='\0'; return;
-}
-
-//------------------------------------------------------------------------------
-
-// ��������������, ������������ � �����
 static void fltnumber2(void) {
   lv[++i_lv]=si; nxsi();
   //_0:
@@ -257,34 +306,8 @@ static void fltnumber2(void) {
     lc=lexFloat; lv[++i_lv]='\0'; return; 
 }
 
-//------------------------------------------------------------------------------
 
-// ������ ��������
-static void string_const(void)
-{
-_1:
-  if(si == '\"') { // ������� ������ ��� �������� � ������
-    nxsi(); goto _2;
-  }
-  if(si == EOF) { // ����� �����, � ������ �� �����������
-    lc = lexError; lv[++i_lv]='\0'; er(6); return; 
-  } 
-  lv[++i_lv]=si; 
-  nxsi();
-  goto _1; // ����� ������ ������ ������ ������
-_2:
-  if(si == '\"') { // ����� ��� ���������
-    lv[++i_lv]=si; // ��������� ��� � ������ ��� ����     
-    nxsi(); 
-    goto _1;
-  }
-  lc = lexString; lv[++i_lv] = '\0'; return; // ����������� ������
-}
 
-//------------------------------------------------------------------------------
-// �������, ����������� ��������� �������
-// ���������� �������������� ������������
-//------------------------------------------------------------------------------
 
 void nxl(void) {
   do {
@@ -295,55 +318,67 @@ void nxl(void) {
     else if(isLetter(si) || si == '_'){
       lv[++i_lv]=si; nxsi(); id_etc();
     }
-    else if(isDigit(si)) {number();}
+    else if(isDigit(si)) {
+        if(si == '0') {
+            zero_prefix();  //числа с префиксом 0
+        } else {
+            number();       //десятичные числа
+        }
+    }
     else if(isIgnore(si)) {nxsi(); lc = lexIgnore;}
-    else if(si == '/') {nxsi(); divcom();}
-    else if(si == '\"') {nxsi(); string_const();}
-    else if(si == ';') {nxsi(); lc = lexSemicolon;}
-    else if(si == ',') {nxsi(); lc = lexComma;}
+    else if(si == '/') {
+        nxsi(); 
+        lc = lexDIV;           //просто оператор деления
+        lv[++i_lv] = '/';
+        lv[++i_lv] = '\0';
+    }
+    else if(si == ';') {nxsi(); lc = lexEOP;} 
+
     else if(si == ':') {
       nxsi(); 
-      if(si == '=') {nxsi(); lc = lexAssign;}
-      else lc = lexColon;
+      if(si == '=') {
+        nxsi(); 
+        lc = lexASS;        // := оператор присваивания
+        lv[++i_lv] = ':';
+        lv[++i_lv] = '=';
+        lv[++i_lv] = '\0';
+      } else {
+        lc = lexColon;      // : метка 
+        lv[++i_lv] = ':';
+        lv[++i_lv] = '\0';
+      }
     }
-    else if(si == '(') {nxsi(); lc = lexLftRndBr;}
-    else if(si == ')') {nxsi(); lc = lexRghRndBr;}
-    else if(si == '[') {nxsi(); lc = lexLftSqBr;}
-    else if(si == ']') {nxsi(); lc = lexRghSqBr;}
-    else if(si == '*') {nxsi(); lc = lexStar;}
-    else if(si == '%') {nxsi(); lc = lexPercent;}
-    else if(si == '+') {nxsi(); lc = lexPlus;}
+
+    else if(si == '*') {nxsi(); lc = lexMULT;} 
+
+    else if(si == '+') {nxsi(); lc = lexPLUS;}   
     else if(si == '-') {
       nxsi(); 
-      if(si == '>') {nxsi(); lc = lexArrow;}  
-      else lc = lexMinus;
+      lc = lexMIN; 
+      lv[++i_lv] = '-';
+      lv[++i_lv] = '\0';
     }
     else if(si == '=') {nxsi(); lc = lexEQ;}
-    else if(si == '!') {
-      nxsi(); 
-      if(si == '=') {nxsi(); lc = lexNE;}
-      else {lc = lexError; er(1);}
-    }
+
     else if(si == '>') {
       nxsi(); 
       if(si == '=') {nxsi(); lc = lexGE;}
-      lc = lexGT;
+      else lc = lexGT;           //ИСПРАВЛЕНО (было без else)
     }
     else if(si == '<') {
       nxsi();
       if(si == '=') {nxsi(); lc = lexLE;}
-      lc = lexLT;
+      else if(si == '>') {nxsi(); lc = lexNE;}  // ДОБАВЛЕНО <>
+      else lc = lexLT;          
     }
-    else if(si == '{') {nxsi(); prenumber();}
+    else if(si == '{') {
+        nxsi(); 
+        comment_pascal();       // комментарии { }
+    }
     else if(si == '.') {lv[++i_lv]=si; nxsi(); fltnumber2();}
     else {lc = lexError; er(0); nxsi();}
-  } while (lc == lexComment || lc == lexSkip || lc == lexIgnore);
+  } while (lc == lexCOMMENT || lc == lexSkip || lc == lexIgnore);
 }
-
-//------------------------------------------------------------------------------
-// �������, ������������ ������ �� ��������
-// ���������� ����� �������� ��������������� �����������
-//------------------------------------------------------------------------------
 
 bool scan_init(char *file_name) {
   if((infil = fopen(file_name, "r"))==0) {
@@ -355,10 +390,6 @@ bool scan_init(char *file_name) {
 
   return true;
 }
-
-//------------------------------------------------------------------------------
-// �������, ����������� ������ �������
-//------------------------------------------------------------------------------
 
 void scan_destroy() {
   fclose(infil);

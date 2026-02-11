@@ -29,7 +29,11 @@ struct find_string rwtab[] = {
     {"then", kwTHEN},
     {"else", kwELSE},
     {"while", kwWHILE},
-    {"do", kwDO}
+    {"do", kwDO},
+    {"begin", lexBST},
+    {"end",   lexEST},
+    {"mod",   lexMOD}
+
 };
 
 int rw_size = sizeof(rwtab) / sizeof(find_string);
