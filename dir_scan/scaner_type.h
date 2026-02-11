@@ -7,51 +7,41 @@ typedef enum {
 } sic_type;
 
 typedef enum {
-  lexArrow,
-  lexAssign,
-  lexColon,
-  lexComma,
-  lexComment,
-  lexEQ,  
-  lexEof, 
-  lexError, 
-  lexFloat, 
-  lexGE,  
-  lexGT,  
-  lexId,  
-  lexIgnore,
-  lexLE,
-  lexLftRndBr,
-  lexLftSqBr,
-  lexLT,
-  lexMinus,
-  lexNE,
-  lexPercent,
-  lexPlus,
-  lexSemicolon,
-  lexSkip,
-  lexSlash, 
-  lexStar,
-  lexString,
-  lexRghRndBr,
-  lexRghSqBr,
-  lexInt,
+  //лексемы по варианту 1 
+  lexPLUS,     // +
+  lexMIN,      // -
+  lexMULT,     // *
+  lexDIV,      // /
+  lexMOD,      // mod
+  lexEQ,       // =  есть
+  lexNE,       // <> есть
+  lexLT,       // <  есть
+  lexGT,       // >  есть
+  lexLE,       // <= есть
+  lexGE,       // >= есть
+  lexASS,      // := лексассигн есть
+  lexCOMMENT,  // { }
+  lexBST,      // begin
+  lexEST,      // end
+  lexEOP,      // ;
 
-  kwAbort,  
-  kwBegin,  
-  kwCase, 
-  kwEnd,    
-  kwFloat,  
-  kwGoto,  
-  kwInt,  
-  kwLoop,
-  kwOr,     
-  kwRead,
-  kwSkip, 
-  kwSpace,  
-  kwTab,    
-  kwVar,  
-  kwWrite
+  kwVECTOR,    // vector
+  kwOF,        // of
+  kwINTEGER,   // integer
+  kwREAL,      // real
+  kwGOTO,      // goto
+  kwREAD,      // read
+  kwWRITE,     // write
+  kwSKIP,      // skip
+  kwSPACE,     // space
+  kwTAB,       // tab
+  kwIF,        // if
+  kwTHEN,      // then
+  kwELSE,      // else
+  kwWHILE,     // while
+  kwDO        // do
+
+
 } lc_type;
 
 
