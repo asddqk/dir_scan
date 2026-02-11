@@ -15,7 +15,7 @@
 
 */
 
-static char *ermes[] = {
+static const char *ermes[] = {
   /* 00 */ "Incorrect lexema!",
   /* 01 */ "Wated \'!=\'",
   /* 02 */ "Last comment is not closed!",

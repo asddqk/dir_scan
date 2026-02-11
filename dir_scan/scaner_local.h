@@ -9,7 +9,7 @@
 ДОБАВЛЯТЬ новые ключевые слова в rwtab[]
 */
 struct find_string {
-    char* wrd;   
+    const char* wrd;   
     lc_type lc;
 };
 
@@ -30,6 +30,7 @@ struct find_string rwtab[] = {
     {"else", kwELSE},
     {"while", kwWHILE},
     {"do", kwDO},
+    //kwBST ; kwEST; kwMOD что с ними делать? 
     {"begin", lexBST},
     {"end",   lexEST},
     {"mod",   lexMOD}
